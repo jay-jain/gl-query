@@ -150,6 +150,12 @@ This flag must be used in conjunction with the `get scans` action and outputs jo
 
 If you choose to select multiple scan types, remember to **comma-delimit** them surround them in double quotes as in the example above.
 
+<h3 id="scan-type-flag">
+<code>--version</code>
+</h3>
+
+Obtains version of `gl-query` utility. This should correspond with a Git Tag.
+
 ## Usage Examples
 ```
 gl-query get project --project-id 3430
