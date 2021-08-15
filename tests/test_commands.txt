@@ -1,7 +1,7 @@
-cd ..
 gl-query get projects -l scala --date-after DATE --csv --filename test.csv -p
 gl-query get project --project-id 3430
 gl-query get pipeline --project-id 3430 --pipeline-id 247249
 gl-query get pipelines --project-id 4748
 gl-query get scans --date-after DATE --scan-type "sast,srcclear,dependency-scan,srcclr" --all-languages
 gl-query get scans --date-after YESTERDAY  --date-before DATE --scan-type srcclr -l scala
+gl-query --version

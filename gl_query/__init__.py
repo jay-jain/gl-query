@@ -1,2 +1,1 @@
-# Version of the gl-query
-__version__ = "1.6.0"
+__version__ = "0.0.45"

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+NEW_VERSION=$1
+
+# Ensure that this script is being executed from root of repository
+if [[ `pwd | grep -c tests` -eq "1" ]]
+then
+  echo "Go back one dir! "
+  cd ..
+fi
+
+echo "You are setting the version to : $NEW_VERSION"
+
+## 1 - setup.cfg
+SETUP_CFG_VERSION=$(cut -d "=" -f 2 <<< $(cat setup.cfg | grep current_version) | xargs)
+sed -i '.bak' "s/$SETUP_CFG_VERSION/$NEW_VERSION/g" setup.cfg
+echo "Modified setup.cfg file"
+rm setup.cfg.bak || true
+
+## 2 - setup.py
+SETUP_PY_VERSION=$(cut -d "=" -f 2 <<< $(cat setup.py | grep version= ) | xargs | tr "," "\n" )
+sed -i '.bak' "s/$SETUP_PY_VERSION/$NEW_VERSION/g" setup.py
+echo "Modified setup.py file"
+rm setup.py.bak || true
+
+
+
+## 3 - __init__.py
+INIT_PY_VERSION=$(cut -d "=" -f 2 <<< $(cat gl_query/__init__.py | grep version) | xargs)
+sed -i '.bak' "s/$INIT_PY_VERSION/$NEW_VERSION/g" gl_query/__init__.py
+echo "Modified __init__.py file"
+rm gl_query/__init__.py.bak || true

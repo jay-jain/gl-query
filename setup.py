@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="gl-query",
-    version="1.6.0",
+    version="0.0.45",
     description="Query GitLab API for useful project and pipeline information.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -31,3 +31,7 @@ setup(
         ]
     }
 )
+
+version = {}
+with open("gl_query/__init__.py") as fp:
+    exec(fp.read(), version)

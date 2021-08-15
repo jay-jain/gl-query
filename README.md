@@ -1,4 +1,3 @@
-# `gl-query`
 `gl-query` is a tool to query the GitLab API for useful project and pipeline information.
 
 <!-- ![Python Package](https://github.com/jay-jain/gl-query/workflows/Python%20package/badge.svg) -->
@@ -52,22 +51,6 @@ Currently, the only supported verb is `get` as the current purpose of this progr
 
 ### Subjects
 Subjects are the second positional argument.
-
-Currently the only supported subjects are `project(s)`, `pipelines(s)`, and `scans` which retrieves information with the `get` verb. For future, these are some of the proposed subjects:
-
-- ~~`project` : `get` particular data regarding a project (by name or id); possibly also modify a project~~
-
-- ~~`pipelines` : `get` all pipeline data with optional flag filters.~~
-
-- ~~`pipeline` : `get` particular data regarding a pipeline (by id); possibly also `trigger` a pipeline~~
-
-- ~~`jobs` : `get` all jobs with optional flag filters.~~ **Implemented via the `get pipeline` action**
-
-- `job` : `get` a particular data regarding a job (by id)
-
-- `groups` : `get` all groups with optional flag filters.
-
-- `group` : `get` a group ( by id or name); possibly also modify the group
 
 ## Optional Arguments (Flags)
 There are multiple command-line flags compatibile with `gl-query`.
@@ -189,26 +172,16 @@ curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.
 ```
 ## Future Work
 
-- ~~Support multiple `--scan-type`. i.e. `--scan-type "sast,srcclr,srcclear,dependency-scan"`~~
-
-- Investigate if `date_before` and `date_after` are not inclusive: If `--date-after` is `2021-07-04` it will should include results after `July 4, 2021 00:00:00`.
-
-- ~~Investigate inconsistencies in `date-filter`~~ See explanation [here](#using-date-filters)
-
-- ~~Language filter on `get scans`~~
-
 - Testing (CI) : Integrate `gl-query_test.sh` script into pipeline or `pre-commit` hook
-
-- Research the names of the scanning jobs and incorporate them into the global `SCAN_TYPES` list
-  - Note: SourceClear job names include both: `srcclr` and `srcclear`
 
 - Implement the conditional query param (`date_before` versus `date_after` dilemna) [here](#using-date-filters)
 
+- Implement GitLab Birthday in config file
+
 - For `get scans` action, implement:
-  - ~~Date Range filter~~
   - Lookup by project-id / project-name
 
-- ~~Implement exclude_projects functionality~~
+- Implement custom exclude_projects functionality
 
 - API throttling -- backoff after a certain number of API Requests (need to find out GitLab API limits)
 
@@ -227,8 +200,6 @@ curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.
 
 - Integrate `--csv` output for all actions
 
-- Investigate a `set` / `edit` action (maybe not)
-
 ## Developer Notes
 ### Manually Deploying to PyPi
 ```
@@ -241,34 +212,37 @@ twine upload dist/gl_query-<VERSION_NUMBER>*
 ```
 
 ### Query Options / Parameters
-Query opts should really only apply to list endpoints. i.e. list projects, groups, users, pipelines, jobs, merge requests, etc...
-Query opts should not be applied to specific looks ups. For example, looking up a specific project by id
+- Query parameters are generally of concern when executing listing operations (i.e. list projects, groups, users, pipelines, jobs, merge requests, etc...)
+- Query parameters are generally not used when dealing with a specific project or pipeline.
 
-GLOBAL QUERY OPTS : per_page, sort, order_by
 
-OBJECT-SPECIFIC QUERY OPTS:
-- Projects
-    - archived=false
-    - last_activity_after
-    - last_activity_before
-    - with_programming_language
-    - order_by=last_activity_at
+- GLOBAL Query Parameters
+  - `per_page`
+  - `sort`
+  - `order_by`
+
+- Projects Query Parameters
+  - `archived=false`
+  - `last_activity_after`
+  - `last_activity_before`
+  - `with_programming_language`
+  - `order_by=last_activity_at`
 
 - Pipelines
-    - order_by=updated_at
-    - yaml_errors=false
-    - scope=finished
-    - updated_after
-    - updated_before
+  - `order_by=updated_at`
+  - `yaml_errors=false`
+  - `scope=finished`
+  - `updated_after`
+  - `updated_before`
 
-Implementing pipeline_id filter on `get scans`:
-1) Iterate through pipeline pages for given project
-2) Piggy back off the get_pipeline method for job info
-3) Sum instance of scan
+- To implement `pipeline_id` filter on `get scans`:
+  - Iterate through pipeline pages for given project
+  - Piggy back off the get_pipeline method for job info
+  - Maintain running sum of target scans
 
 ### Using Date Filters
 
-tldr; Do not use both `date_before` and `date_after` in **projects** queries. You 
+tldr; Do not use both `date_before` and `date_after` in **projects** queries.
 
 **Scenario:**
 
@@ -331,7 +305,7 @@ gl-query get scans --scan-type sast -l Java --date-after 2021-07-03
 
 ## [DANGEROUS] ALL `sast` scans EVER
 ```
-# This will look through every project since GL_BDAY (JANUARY 1, 2019)
+# This will look through every project since GL_BDAY (JANUARY 1, 2019) which could generate tremendous load against the GitLab instance
 
 TODAY=$(date '+%Y-%m-%d')
 gl-query get scans --scan-type sast --all-languages --date-before $TODAY

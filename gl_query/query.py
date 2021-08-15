@@ -11,6 +11,7 @@ from prettytable import PrettyTable
 import argparse
 from configparser import ConfigParser
 from importlib import resources  # Python 3.7+
+from .__init__ import __version__
 
 ### VARIABLES
 GITLAB_URL=""
@@ -484,6 +485,7 @@ def main():
     #####################################################################
     parser.add_argument(
         'verb',
+        nargs='?',
         action='store',
         metavar='VERB',
         help='verbs such as get, set, etc ',
@@ -491,11 +493,13 @@ def main():
     )
     parser.add_argument(
         'subject',
+        nargs='?',
         action='store',
         metavar='SUBJECT',
         help='subjects such as project, pipeline, job, groups, etc. ',
         choices=["projects", "project", "pipelines", "pipeline", "scans"]
     )
+
     #####################################################################
     ### OPTIONS
     #####################################################################
@@ -505,6 +509,7 @@ def main():
     parser.add_argument("--pipeline-id"  , help="pipeline id", type=int, action='store')
     parser.add_argument("--project-id"   , help="project id", type=int, action='store')
     parser.add_argument("--max-results"  , help="max results", type=int, action='store')
+    parser.add_argument("--version"      ,help="max results",           action='store_true')
 
     # --date-after
     parser.add_argument(
@@ -582,8 +587,6 @@ def main():
             print("You will get a CSV report named " + args.filename)
     elif args.csv:
         print("You will get a CSV report.")
-    else:
-        print("You will NOT get a CSV report")
 
     ## --date-after flag
     if args.date_after != None:
@@ -703,6 +706,11 @@ def main():
             print(pretty_print_projects(result))
         else:
             print("ERROR: Missing --project-id flag.")
+
+    if args.version:
+        print("VERSION: " + __version__ )
+        sys.exit(1)
+
     print("TOTAL API REQUESTS :", API_REQUESTS)
 # if __name__ == "__main__":
 #     main()

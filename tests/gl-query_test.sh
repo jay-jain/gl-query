@@ -1,10 +1,17 @@
 # #!/bin/bash
 
 FILENAME='test_commands.txt'
-
 # String replacement for 'DATE'
 TODAY=$(date '+%Y-%m-%d')
 YESTERDAY=$(date -j -v-1d -f "%Y-%m-%d" $TODAY "+%Y-%m-%d")
+
+if [[ `pwd | grep -c tests` -eq "0" ]]
+then
+  echo "Wrong directory! I think you meant to execute this from the 'tests' directory, so I'm taking you there now. "
+  cd tests
+fi
+
+
 if [[ "$(uname -s)" == "Darwin" ]]
 then
     echo "You're on Mac, so sed requires a backup file : sed -i '.bak'  "
@@ -51,7 +58,6 @@ echo "Failed     Commands: ${f} / ${num_commands} - $failure_rate %"
 
 if [[ "$(uname -s)" == "Darwin" ]]
 then
-    echo "You're on Mac, so sed requires a backup file : sed -i '.bak'  "
     sed -i '.bak' "s/$TODAY/DATE/g" test_commands.txt
     sed -i '.bak' "s/$YESTERDAY/YESTERDAY/g" test_commands.txt
 else
@@ -59,8 +65,10 @@ else
     sed -i "s/$YESTERDAY/YESTERDAY/g" test_commands.txt
 fi
 
+if [[ -f "test.csv" ]]; then
+    rm test.csv || true # CSV may not be generated if no results found
+fi
 rm test_commands.txt.bak || true
-rm test.csv|| true # CSV may not be generated if no results found
 
 # Gate check
 if [[ $f -gt 0 ]]
