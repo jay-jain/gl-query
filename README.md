@@ -169,12 +169,12 @@ gl-query get pipeline --project-id 3430 --pipeline-id 247249
 # Dev Guide
 ## Useful `curl` commands for troubleshooting
 ```
-curl --header "Authorization: Bearer <your_access_token>" "https://gitlab.gaikai.com/api/v4/projects"
+curl --header "Authorization: Bearer <your_access_token>" "https://gitlab.com/api/v4/projects"
 ```
 
 To get `x-total-pages`:
 ```
-curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.gaikai.org/api/v4/projects/"
+curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.com/api/v4/projects/"
 ```
 ## Future Work
 
@@ -196,11 +196,11 @@ curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.
 - Investigate more robust / centralized exception Handling
 
 - Flags
-    - `--top-level-group`
-    - `--cgei-subgroup`
-    - `--include-user-repositories`
+    - `--group`
+    - `--subgroup`
+    - `--include-user-repositories` [ User repos are excluded by default ]
 
-- Implement search functionality: `https://gitlab.gaikai.org/api/v4/projects?search=nexus`
+- Implement search functionality: `https://gitlab.com/api/v4/projects?search=<KEYWORD>`
 
 - Create a global query options function and child functions for each type of object (projects, pipelines, etc.)
 
