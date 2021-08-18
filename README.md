@@ -11,6 +11,11 @@
 pip install gl-query
 ```
 
+OR, To run directly from CLI as traditional Python program (from root dir):
+```
+python3 gl_query/gl-query.py <SUBJECT> <VERB> --OPTIONS
+```
+
 - [Generate a GitLab Personal Access Token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token)
 
   - Make sure you store this token in a safe place. As a side-note, any results from the `gl-query` tool are dependent on both the permissions you give the token when you generate it as well as the access-rights you have on the GitLab instance.
@@ -21,12 +26,27 @@ pip install gl-query
 # Must include "/api/v4/"
 url = https://<GITLAB_HOST>/api/v4/
 token = YOUR_GITLAB_PERSONAL_ACCESS_TOKEN
+gl_birthday = 2021-01-01
+scan_types = ["sast","dast","iast", "mast", "dependency","container"]
+languages = "C", "Go", "Java", "Javascript", "Python","Rust", "Scala"]
+pagination = 100
 ```
 
+* `url` (REQUIRED): The URL for the gitlab instance. Note the `https` and `/api/v4/` are required.
+
+* `token` (REQUIRED): Your access token
+
+* `gl_birthday` (REQUIRED) : This is the date your GitLab instance was launched or started being used. This value is necessary for date-filters to work in `gl-query`
+
+* `scan_types` (REQUIRED): This is useful for the scan type queries. This value allows you to determine acceptable scan types to filter on.
+
+* `languages` (REQUIRED): Since the tool provides language filters, you want to limit you queries to languages that are supported in your organization.
+
+* `pagination` (OPTIONAL): This is the `per page` value for pagination on queries. The default value is the max (100)
 
 # Usage
 ## Positional Arguments
-Positional arguments subject/verb commands for the CLI utility.
+Positional arguments are in the form of **subjects** and **verbs** .
 The format for position arguments is:
 ```
 gl-query <VERB> <SUBJECT> --<OPTIONAL_FLAGS>
@@ -50,7 +70,10 @@ Currently, the only supported verb is `get` as the current purpose of this progr
 - Managing Tags / Releases
 
 ### Subjects
-Subjects are the second positional argument.
+Subjects are the second positional argument. These are the following supported **subjects**:
+- `projects`
+- `pipelines`
+- `jobs`
 
 ## Optional Arguments (Flags)
 There are multiple command-line flags compatibile with `gl-query`.
@@ -139,33 +162,42 @@ The flag blocks output to the console or standard out. This is good for security
 ```
 gl-query get scans --scan-type sast --date-after 2021-08-02 -l java
 
-gl-query get scans --date-after 2021-08-02 --scan-type "sast,srcclear,dependency-scan,srcclr" -l scala
-
+gl-query get scans --date-after 2021-08-02 --scan-type "sast,dast,dependency" -l scala
 ```
 
-This flag must be used in conjunction with the `get scans` action and outputs job information pertaining to the scan type(s). Currently there are three scan types supported for this query:
-- `sast` (JS, Python, Go, Java, C++, sbt, Rust )
-- `dependency-scan` (JS, Python, Go, Java, sbt, Rust)
-- `srcclear` or `srcclr` (JS, Python, Go, Java, C++, sbt, Rust )
+This flag must be used in conjunction with the `get scans` action and outputs job information pertaining to the scan type(s). You can set supported scan types in your `~/.gl-query/config.cfg` file.
 
 If you choose to select multiple scan types, remember to **comma-delimit** them surround them in double quotes as in the example above.
 
-<h3 id="scan-type-flag">
+<h3 id="version-flag">
 <code>--version</code>
 </h3>
 
 Obtains version of `gl-query` utility. This should correspond with a Git Tag.
 
-## Usage Examples
-```
-gl-query get project --project-id 3430
-gl-query get projects -l scala --date-filter 2021-07-30 --csv --filename test.csv -p
+<h3 id="search-flag">
+<code>--search</code>
+</h3>
 
-gl-query get pipelines --project-id 4748
-gl-query get pipeline --project-id 3430 --pipeline-id 247249
+This only works with `get projects`. This will search only by **project name** , not by group or subgroup.
 
-```
+<h3 id="has-srcclr-flag">
+<code>--has-srcclr</code>
+</h3>
 
+Gets projects that utilize Veracode SourceClear scanning.
+
+<h3 id="no-srcclr-flag">
+<code>--no-srcclr</code>
+</h3>
+
+Gets projects that **DO NOT** utilize Veracode SourceClear scanning.
+
+<h3 id="all-languages-flag">
+<code>--all-languages</code>
+</h3>
+
+Only to be used with `get scans`. Gets scans from all supported languages on your GitLab instance.
 # Dev Guide
 ## Useful `curl` commands for troubleshooting
 ```
@@ -182,7 +214,7 @@ curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.
 
 - Implement the conditional query param (`date_before` versus `date_after` dilemna) [here](#using-date-filters)
 
-- Implement GitLab Birthday in config file
+- ~~Implement GitLab Birthday in config file~~
 
 - For `get scans` action, implement:
   - Lookup by project-id / project-name
@@ -196,31 +228,37 @@ curl -s -I --header "Authorization: Bearer <your_access_token>" "https://gitlab.
 - Investigate more robust / centralized exception Handling
 
 - Flags
-    - `--group`
-    - `--subgroup`
+    - `--group` : Filter by group
+    - `--subgroup` : Filter by subgroup
     - `--include-user-repositories` [ User repos are excluded by default ]
 
-- Implement search functionality: `https://gitlab.com/api/v4/projects?search=<KEYWORD>`
+- ~~Implement search functionality for projects: `https://gitlab.com/api/v4/projects?search=<KEYWORD>`~~
 
 - Create a global query options function and child functions for each type of object (projects, pipelines, etc.)
 
 - Integrate `--csv` output for all actions
 
+- Handle flags / options better (maybe through GLOBAL VARIABLE)
+
 ## Developer Notes
-### Manually Deploying to PyPi
-```
-bumpversion --current-version <CURRENT_VERSION> minor setup.py gl-query/__init__.py --allow-dirty
-
-python3 setup.py sdist bdist_wheel
-
-twine upload dist/gl-query-<VERSION_NUMBER>*
-twine upload dist/gl_query-<VERSION_NUMBER>*
-```
+### Build/Deploy to PyPi
+The release strategy is as follows:
+- Run tests locally : (`tests/gl-query_test.sh`)
+- Determine version
+  - Use `tests/reset_version` script
+- Deploy to Test PyPi : `tests/deploy_test.sh`
+  - Bumps version (modifies three files: `__init__.py`, `setup.cfg`, `setup.py`)
+  - Builds `.tar.gz` and `.whl`
+  - Uploads both to Tests PyPi
+  - Smoke tests: Downloads from Tesst PyPi and tests
+- Deploy to (Prod) PyPi : `tests/deploy_prod.sh`
+  - Rebuilds `whl` and `.tar.gz`
+  - Uploads both to Prod PyPi
+  - Smoke tests: Downloads from PyPi and tests
 
 ### Query Options / Parameters
 - Query parameters are generally of concern when executing listing operations (i.e. list projects, groups, users, pipelines, jobs, merge requests, etc...)
 - Query parameters are generally not used when dealing with a specific project or pipeline.
-
 
 - GLOBAL Query Parameters
   - `per_page`
@@ -278,41 +316,3 @@ between July 15, 2021 and July 30, 2021 as it is using the `&last_activity` quer
   ```
 
   - This approach has it's own risks as GL project/pipeline activity may be skewed such that activity was low for the first couple months / year, so keep this into account if you choose to implement this.
-
-
-# Useful Queries
-
-## All Scans & All Languages since a certain date
-```
-gl-query get scans --all-languages --scan-type "sast, dependency-scan, srcclr, srcclear"  --date-after 2021-07-04 --csv -f all_scans_since_07_04_21.csv
-```
-Note, we query for both `srcclear` and `srcclr` since they are both used as job names in GitLab CI.
-
-## Java SAST Scans ( w/ `--date-after`)
-```
-# Java SAST Scans (July 3 - August 3)
-gl-query get scans --scan-type sast -l Java --date-after 2021-07-03
-```
-
-**RESULT:**
-
-`Total SAST Scan Jobs after 2021-07-03 : 576`
-
-## ALL `sast` Scans ( w/ `--date-after`)
-`gl-query get scans --scan-type sast --all-languages --date-after 2021-07-03`
-
-## ALL `dependency-scan` ( w/ `--date-after`)
-`gl-query get scans --scan-type dependency-scan --all-languages --date-after 2021-07-03`
-
-## ALL `srcclr` or `srcclear` ( w/ `--date-after`)
-`gl-query get scans --scan-type srcclr --all-languages --date-after 2021-07-03`
-
-`gl-query get scans --scan-type srcclear --all-languages --date-after 2021-07-03`
-
-## [DANGEROUS] ALL `sast` scans EVER
-```
-# This will look through every project since GL_BDAY (JANUARY 1, 2019) which could generate tremendous load against the GitLab instance
-
-TODAY=$(date '+%Y-%m-%d')
-gl-query get scans --scan-type sast --all-languages --date-before $TODAY
-```

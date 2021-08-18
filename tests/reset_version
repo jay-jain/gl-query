@@ -23,8 +23,6 @@ sed -i '.bak' "s/$SETUP_PY_VERSION/$NEW_VERSION/g" setup.py
 echo "Modified setup.py file"
 rm setup.py.bak || true
 
-
-
 ## 3 - __init__.py
 INIT_PY_VERSION=$(cut -d "=" -f 2 <<< $(cat gl_query/__init__.py | grep version) | xargs)
 sed -i '.bak' "s/$INIT_PY_VERSION/$NEW_VERSION/g" gl_query/__init__.py
