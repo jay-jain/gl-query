@@ -31,6 +31,7 @@ while read p || [ -n "$p" ]; do
     ((num_tests=num_tests+1))
     echo "Test # $num_tests / $(grep -c '' $FILENAME) "
     echo "Executing the following command: $p"
+    cd ../gl_query
     eval "time $p --silent"
     if [[ $? -eq "0" ]]
     then
@@ -40,6 +41,7 @@ while read p || [ -n "$p" ]; do
         echo -e "[ FAILURE ]: Exit Code was $? \n"
         ((f=f+1))
     fi
+    cd ../tests
 done < $FILENAME
 
 num_commands=$( grep -c "" $FILENAME )

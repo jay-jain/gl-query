@@ -107,3 +107,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+##### gl-query specific files
+# Avoid leaking project id / name data
+exclude_projects
+
+# Avoid leaking any CSV output
+*.csv*
