@@ -5,7 +5,7 @@ from helper import *
 ##### QUERY FUNCTIONS
 ########################################
 
-def projects_query(total_project_pages, pipeline_filter_flag, search_query, language, has_srcclr_flag, no_srcclr_flag):
+def projects_query(total_project_pages, pipeline_filter_flag, search_query, language, has_srcclr_flag, no_srcclr_flag, user_repos):
     # PROJECTS QUERY: `gl-query get projects`
     global TOTAL_PROJECTS
     projects = list()
@@ -18,15 +18,16 @@ def projects_query(total_project_pages, pipeline_filter_flag, search_query, lang
             print(temp)
             continue
         for j in range(len(temp)):
-            if temp[j]["namespace"]["kind"] == "user" :
-                print("(", str(j + 1) , "/ " + str(len(temp)) + " ) Project ID", temp[j]['id'], "is a user repository. SKIPPED!")
+            if temp[j]["namespace"]["kind"] == "user" and not user_repos:
                 user_projects += 1
+                print("(", str(j + 1) , "/ " + str(len(temp)) + " ) Project ID", temp[j]['id'], "is a user repository. SKIPPED!")
                 continue
             elif language != None and not has_language(temp[j]['id'], language):
                 print("(", j + 1 , "/ " + str(len(temp)) + " ) Project ID", temp[j]['id'], "DOES NOT CONTAIN", language,". SKIPPED!")
                 continue
             else:
                 proj_data = dict()
+                if temp[j]["namespace"]["kind"] == "user": user_projects += 1
                 if "default_branch" not in list(temp[j].keys()): default_branch = "master"
                 else: default_branch = temp[j]['default_branch']
                 latest_pipeline = get_latest_pipeline(temp[j]['id'], ref = default_branch)
@@ -53,11 +54,11 @@ def projects_query(total_project_pages, pipeline_filter_flag, search_query, lang
                     projects = construct_project_data(projects, temp[j], proj_data)
         print("==================================================================================================================================================================================")
     if has_srcclr_flag or no_srcclr_flag:
-        print("Projects WITH Sourceclear:",str(projects_with_srcclr))
-        print("Projects WITHOUT Sourceclear: ",projects_without_srcclr)
-        print("User Projects: ", user_projects )
-        print("Projects without any pipeline: ", projects_without_pipeline )
-    return projects
+        metadata = {"has_sourceclear":projects_with_srcclr, "no_sourceclear": projects_without_srcclr, "user_projects": user_projects, "no_pipelines": projects_without_pipeline}
+        result = {"projects":projects,"metadata":metadata}
+    else:
+        result = {"projects" : projects}
+    return result
 
 def pipelines_query(total_project_pages, search_query, project_id):
      # PIPELINES QUERY: `gl-query get pipelines`
@@ -109,7 +110,7 @@ def scan_frequency_query(total_project_pages, search_query, scan_type, date_afte
             continue
         for j in range(len(projects)): # Iterate through projects
             print("Analyzing project " + str(j + 1) + " of " + str(len(projects)) + ".")
-            if projects[j]["namespace"]["kind"] == "user" :
+            if projects[j]["namespace"]["kind"] == "user":
                 print("(", j + 1 , "/ " + str(len(projects)) + " ) Project ID", projects[j]['id'], "is a user repository. SKIPPED!")
                 continue
             if language != None and not has_language(projects[j]['id'], language):

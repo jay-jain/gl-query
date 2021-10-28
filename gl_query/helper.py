@@ -66,12 +66,19 @@ def get_latest_pipeline(id, ref = ''):
         return {"created_at": "No Pipelines in this Project"}
 
 def has_srcclr(project_id, pipeline_id):
+    jobs = []
     response = response_validator(requests.get(config.GITLAB_URL + "projects/" + str(project_id) + "/pipelines/" + str(pipeline_id) + "/jobs", headers=eval(config.HEADERS)))
     config.API_REQUESTS += 1
     if response is False:
         print("Issue accessing pipeline: " + str(pipeline_id)+ " . SKIPPED")
         return False
-    jobs = json.loads(response.text)
+    total_pages = int(response.headers['X-Total-Pages'])
+    for page in range(total_pages + 1):
+        response = response_validator(requests.get(config.GITLAB_URL + "projects/" + str(project_id) + "/pipelines/" + str(pipeline_id) + "/jobs?page=" + str(page + 1), headers=eval(config.HEADERS)))
+        if response is False:
+            print("Issue accessing jobs: " + str(pipeline_id)+ " . SKIPPED")
+            return False
+        jobs += json.loads(response.text)
     srcclr_scan_count = 0
     for m in range(len(jobs)):
         if "srcclear" in jobs[m]["name"] or "srcclr" in jobs[m]["name"] or "source clear report" in jobs[m]["name"]:

@@ -272,14 +272,19 @@ def main():
     if args.verb == 'get' and args.subject == 'projects':
         search_query = construct_query(type = 'projects',language = language_flag_helper(args.language), date_after = args.date_after, date_before = args.date_before, search = args.search)
         total_project_pages = paginate(args.subject, search_query)
-        result = projects_query(total_project_pages, pipeline_filter_flag, search_query, args.language, args.has_srcclr, args.no_srcclr)
-        if len(result) > 0:
-            print(pretty_print_projects(result))
+        result = projects_query(total_project_pages, pipeline_filter_flag, search_query, args.language, args.has_srcclr, args.no_srcclr, args.include_user_repositories)
+        if len(result["projects"]) > 0:
+            print(pretty_print_projects(result["projects"]))
             fields = ["name","id","team","project_path","last_pipeline","last_activity","visibility","type","languages","default_branch","url"]
-            if args.csv: print(csv_writer(result,fields, filename = args.filename))
+            if args.csv: print(csv_writer(result["projects"],fields, filename = args.filename))
         else:
             print("No CSV report generated.")
         print("TOTAL PROJECTS w/ Matching Search Criterion: ", config.TOTAL_PROJECTS)
+        if "metadata" in result:
+            print("Projects WITH Sourceclear:",str(result['metadata']['has_sourceclear']))
+            print("Projects WITHOUT Sourceclear: ",str(result['metadata']['no_sourceclear']))
+            print("User Projects: ", str(result['metadata']['user_projects']) )
+            print("Projects without any pipeline: ", str(result['metadata']['no_pipelines']) )
 
     # get project -- get_project()
     if args.verb == 'get' and args.subject =='project':
